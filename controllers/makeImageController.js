@@ -4,7 +4,6 @@ const FormData = require("form-data");
 const path = require("path");
 const fs = require("node:fs"); // For handling file paths if you're sending an image file
 
-
 const generateImage = async (req, res) => {
   const { prompt, aspect_ratio, negative_prompt } = req.body;
   console.log(prompt, aspect_ratio, negative_prompt);
@@ -33,16 +32,17 @@ const generateImage = async (req, res) => {
     if (response.status === 200) {
       // Define file path
       const fileName = `generated_${Date.now()}.webp`;
-      const filePath = path.join(__dirname, "public", "images", fileName);
+      const publicDir = path.join(__dirname, "..", "public", "images");
 
-      // Save image locally
+      if (!fs.existsSync(publicDir)) {
+        fs.mkdirSync(publicDir, { recursive: true });
+      }
+      console.log(publicDir, response);
+      const filePath = path.join(publicDir, fileName);
       fs.writeFileSync(filePath, Buffer.from(response.data));
 
-      // Return the URL of the saved image
-      const imageUrl = `https://PicGen-pro-maker.onrender.com/images/${fileName}`;
-      res.status(200).json({
-        imageUrl,
-      });
+      const imageUrl = `/images/${fileName}`;
+      res.status(200).json({ imageUrl });
     } else {
       throw new Error(`${response.status}: ${response.data.toString()}`);
     }
@@ -57,6 +57,4 @@ const generateImage = async (req, res) => {
   }
 };
 
-
 module.exports = { generateImage };
-
