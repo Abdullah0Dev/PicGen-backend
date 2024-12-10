@@ -5,8 +5,8 @@ const path = require("path");
 const fs = require("node:fs"); // For handling file paths if you're sending an image file
 
 const generateImage = async (req, res) => {
-  const { prompt, aspect_ratio, negative_prompt } = req.body;
-  console.log(prompt, aspect_ratio, negative_prompt);
+  const { prompt, aspect_ratio, negative_prompt, api_key } = req.body;
+  console.log(prompt, aspect_ratio, negative_prompt, api_key);
 
   try {
     const payload = {
@@ -15,7 +15,7 @@ const generateImage = async (req, res) => {
       aspect_ratio, // 16:9 1:1 21:9 2:3 3:2 4:5 5:4 9:16 9:21
       negative_prompt,
     };
-
+    const FINAL_STABILITY_API_KEY = api_key || process.env.STABILITY_API_KEY;
     const response = await axios.postForm(
       `https://api.stability.ai/v2beta/stable-image/generate/ultra`,
       axios.toFormData(payload, new FormData()),
@@ -23,7 +23,7 @@ const generateImage = async (req, res) => {
         validateStatus: undefined,
         responseType: "arraybuffer",
         headers: {
-          Authorization: `Bearer ${process.env.STABILITY_API_KEY}`,
+          Authorization: `Bearer ${FINAL_STABILITY_API_KEY}`,
           Accept: "image/*",
         },
       }
