@@ -11,7 +11,7 @@ const generateImage = async (req, res) => {
   try {
     const payload = {
       prompt,
-      output_format: "webp",
+      output_format: "webp", 
       aspect_ratio, // 16:9 1:1 21:9 2:3 3:2 4:5 5:4 9:16 9:21
       negative_prompt,
     };
@@ -41,7 +41,7 @@ const generateImage = async (req, res) => {
       const filePath = path.join(publicDir, fileName);
       fs.writeFileSync(filePath, Buffer.from(response.data));
 
-      const imageUrl = `/images/${fileName}`;
+      const imageUrl = `https://picgen-pro-maker.onrender.com/images/${fileName}`;
       res.status(200).json({ imageUrl });
     } else {
       throw new Error(`${response.status}: ${response.data.toString()}`);
