@@ -29,29 +29,36 @@ const generateImage = async (req, res) => {
         },
       }
     );
-
+// 
     if (response.status === 200) {
-      // Define file path
-      const fileName = `generated_${Date.now()}.webp`;
-      const publicDir = path.join(__dirname, "..", "public", "images");
+      // Prepare image data for ImgBB
+      const formData = new FormData();
+      formData.append("image", Buffer.from(response.data).toString("base64"));
 
-      if (!fs.existsSync(publicDir)) {
-        fs.mkdirSync(publicDir, { recursive: true });
+      const imgbbResponse = await axios.post(
+        `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
+        formData,
+        { headers: formData.getHeaders() }
+      );
+      console.log(`Imgbb Response:`, imgbbResponse);
+      
+
+      if (imgbbResponse.status === 200) {
+        const imageUrl = imgbbResponse.data.data.url;
+        console.log(`Image URL: `, imageUrl);
+
+        const newImage = await Images.create({
+          prompt: prompt,
+          url: imageUrl,
+        });
+
+        await newImage.save();
+        return res.status(200).json({ imageUrl });
+      } else {
+        throw new Error(
+          `ImgBB Error: ${imgbbResponse.status} - ${imgbbResponse.data}`
+        );
       }
-      console.log(publicDir, response);
-      const filePath = path.join(publicDir, fileName);
-      fs.writeFileSync(filePath, Buffer.from(response.data));
-
-      const imageUrl = `https://picgen-pro-maker.onrender.com/images/${fileName}`;
-      console.log(`Image URL: `, imageUrl);
-
-      const newImage = await Images.create({
-        prompt: prompt,
-        url: imageUrl,
-      });
-
-      await newImage.save();
-      res.status(200).json({ imageUrl });
     } else {
       throw new Error(`${response.status}: ${response.data.toString()}`);
     }
@@ -68,7 +75,7 @@ const generateImage = async (req, res) => {
 
 const fetchAllRecentImages = async (req, res) => {
   try {
-    const recentImages = await Images.find({});
+    const recentImages = await Images.find({}).sort({ createdAt: -1 });
     if (!recentImages) {
       return res.status(404).json({ message: "no recent message found" });
     }
